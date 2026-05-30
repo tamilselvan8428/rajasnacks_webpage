@@ -28,7 +28,7 @@ const injectStyles = () => {
     .rsa-sidebar {
       width:240px; background:#1A0A00; min-height:100vh;
       display:flex; flex-direction:column;
-      position:fixed; top:0; left:0; bottom:0; z-index:1002;
+      position:relative; z-index:1002; flex-shrink:0;
       box-shadow:4px 0 24px rgba(0,0,0,0.2);
     }
     .rsa-sidebar-logo {
@@ -58,7 +58,7 @@ const injectStyles = () => {
     .rsa-nav-item.active .rsa-nav-item-icon { background:rgba(232,98,26,0.25); }
 
     /* ── Main content ── */
-    .rsa-main { margin-left:240px; height:100vh; overflow-y:auto; background:#F5F0EB; }
+    .rsa-main { flex:1; min-width:0; height:100vh; overflow-y:auto; background:#F5F0EB; }
     .rsa-topbar {
       background:#fff; padding:0 32px; height:64px;
       display:flex; align-items:center; justify-content:space-between;
@@ -225,7 +225,7 @@ const injectStyles = () => {
     @media(max-width:768px) {
       .rsa-sidebar { width:64px; }
       .rsa-sidebar-logo span, .rsa-nav-item span { display:none; }
-      .rsa-main { margin-left:64px; }
+      .rsa-main { flex:1; }
       .rsa-content { padding:16px; }
     }
   `;
@@ -514,7 +514,7 @@ const Admin = () => {
 
   /* ══ DASHBOARD ══ */
   return (
-    <div className="rsa-body" style={{ position:'fixed', inset:0, zIndex:1001, overflowY:'auto', display:'flex' }}>
+    <div className="rsa-body" style={{ position:'fixed', inset:0, zIndex:1001, display:'flex', flexDirection:'row', overflow:'hidden' }}>
 
       {/* ── Sidebar ── */}
       <aside className="rsa-sidebar">

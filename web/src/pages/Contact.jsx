@@ -171,8 +171,8 @@ function useReveal(threshold = 0.08) {
 const FAQS = [
   { q: 'What is the minimum order quantity?', a: 'Our minimum wholesale order is ₹500. For bulk orders above ₹5,000 we offer additional tiered discounts.' },
   { q: 'Do you offer pan-India delivery?', a: 'Yes! We deliver to 500+ cities across India. Standard delivery takes 2–5 business days; express same-day dispatch is available for orders placed before 2 PM.' },
-  { q: 'Can I get product samples before ordering?', a: 'Absolutely. Contact us via phone or the form and we\'ll arrange a sample pack of up to 5 products at a nominal courier charge.' },
-  { q: 'What payment methods do you accept?', a: 'We accept UPI, NEFT/RTGS, cheque, and all major cards. Credit terms are available for established wholesale partners.' },
+  { q: 'Can I get product samples before ordering?', a: "Absolutely. Contact us via phone or the form and we'll arrange a sample pack of up to 5 products at a nominal courier charge." },
+  { q: 'What payment methods do you accept?', a: "We accept UPI, NEFT/RTGS, cheque, and all major cards. Credit terms are available for established wholesale partners." },
 ];
 
 /* ─── FAQ Accordion ─── */
@@ -243,7 +243,7 @@ const Contact = () => {
     setErrors(prev => ({ ...prev, [name]: errs[name] }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const allTouched = { name:true, email:true, phone:true, subject:true, message:true };
     setTouched(allTouched);
@@ -252,13 +252,33 @@ const Contact = () => {
     if (Object.keys(errs).length > 0) return;
 
     setStatus('sending');
-    setTimeout(() => {
-      setStatus('success');
-      setForm({ name:'', email:'', phone:'', subject:'', message:'' });
-      setTouched({});
-      setErrors({});
-      setTimeout(() => setStatus('idle'), 5000);
-    }, 1600);
+    try {
+      const res = await fetch('http://localhost:5000/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          subject: form.subject,
+          message: form.message,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatus('success');
+        setForm({ name:'', email:'', phone:'', subject:'', message:'' });
+        setTouched({});
+        setErrors({});
+        setTimeout(() => setStatus('idle'), 5000);
+      } else {
+        setStatus('error');
+        setTimeout(() => setStatus('idle'), 4000);
+      }
+    } catch {
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 4000);
+    }
   };
 
   const handleRipple = (e) => {
@@ -304,6 +324,7 @@ const Contact = () => {
           <p style={{ color:'rgba(255,255,255,0.87)', fontSize:17, lineHeight:1.7, maxWidth:480, margin:'0 auto' }}>
             Wholesale enquiries, custom orders, or just a question — we're here every step of the way.
           </p>
+          {/* Quick contact pills */}
           <div style={{ display:'flex', gap:12, justifyContent:'center', marginTop:28, flexWrap:'wrap' }}>
             {[
               { icon:'📞', label:'+91 98765 43210', href:'tel:+919876543210' },
@@ -323,6 +344,7 @@ const Contact = () => {
             ))}
           </div>
         </div>
+        {/* Wave */}
         <div style={{ position:'absolute', bottom:0, left:0, right:0, lineHeight:0 }}>
           <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" style={{ display:'block' }}>
             <path d="M0 60L48 50C96 40 192 24 288 20C384 16 480 20 576 26C672 32 768 38 864 38C960 38 1056 32 1152 28C1248 24 1344 24 1392 24L1440 24V60H0Z" fill="#FFF8F0"/>
@@ -330,8 +352,10 @@ const Contact = () => {
         </div>
       </div>
 
+      {/* ── Main Grid ── */}
       <div style={{ maxWidth:1160, margin:'0 auto', padding:'60px 24px 40px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:48, alignItems:'start' }}>
 
+        {/* ── LEFT: Contact Form ── */}
         <div ref={formRef} className="reveal" style={{
           background:'#fff', borderRadius:24, padding:40,
           boxShadow:'0 4px 40px rgba(232,98,26,0.08)',
@@ -343,6 +367,7 @@ const Contact = () => {
             <p style={{ color:'#9A8070', fontSize:14, marginTop:6 }}>We reply within 24 hours on business days.</p>
           </div>
 
+          {/* ── Success State ── */}
           {status === 'success' && (
             <div style={{
               background:'#F0FDF4', border:'1.5px solid #86EFAC', borderRadius:16,
@@ -358,6 +383,7 @@ const Contact = () => {
             </div>
           )}
 
+          {/* ── Error banner ── */}
           {status === 'error' && (
             <div style={{ background:'#FEF2F2', border:'1.5px solid #FECACA', borderRadius:12, padding:'12px 16px', marginBottom:20, color:'#DC2626', fontSize:13, display:'flex', alignItems:'center', gap:8 }}>
               ⚠️ Something went wrong. Please try again.
@@ -365,6 +391,7 @@ const Contact = () => {
           )}
 
           <form onSubmit={handleSubmit} noValidate>
+            {/* Name + Email row */}
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:0 }}>
               <div className="rsc-field">
                 <label className="rsc-label">Full Name *</label>
@@ -384,6 +411,7 @@ const Contact = () => {
               </div>
             </div>
 
+            {/* Phone + Subject row */}
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
               <div className="rsc-field">
                 <label className="rsc-label">Phone Number</label>
@@ -394,7 +422,7 @@ const Contact = () => {
               <div className="rsc-field">
                 <label className="rsc-label">Subject</label>
                 <select className="rsc-input" name="subject" value={form.subject} onChange={handleChange}
-                  style={{ cursor:'pointer', WebkitAppearance:'none', backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23E8621A' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E)\"", backgroundRepeat:'no-repeat', backgroundPosition:'right 14px center' }}>
+                  style={{ cursor:'pointer', WebkitAppearance:'none', backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23E8621A' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E\")", backgroundRepeat:'no-repeat', backgroundPosition:'right 14px center' }}>
                   <option value="">Select a topic</option>
                   <option value="wholesale">Wholesale Enquiry</option>
                   <option value="order">Place an Order</option>
@@ -405,6 +433,7 @@ const Contact = () => {
               </div>
             </div>
 
+            {/* Message */}
             <div className="rsc-field">
               <label className="rsc-label">Your Message *</label>
               <textarea className={`rsc-input rsc-textarea ${fieldState('message')}`}
@@ -420,6 +449,7 @@ const Contact = () => {
               </div>
             </div>
 
+            {/* Submit */}
             <button type="submit" className="rsc-submit" disabled={status === 'sending'} onClick={handleRipple}
               style={{ marginTop:4 }}>
               {ripple && <span className="ripple-circle" style={{ left:ripple.x, top:ripple.y }} />}
@@ -430,13 +460,16 @@ const Contact = () => {
           </form>
         </div>
 
+        {/* ── RIGHT: Info + Map ── */}
         <div ref={infoRef} className="reveal" style={{ display:'flex', flexDirection:'column', gap:24 }}>
 
+          {/* Info card */}
           <div style={{
             background:'linear-gradient(145deg,#BF4E0C,#E8621A,#F5A623)',
             borderRadius:24, padding:36, color:'#fff',
             boxShadow:'0 8px 40px rgba(232,98,26,0.3)', position:'relative', overflow:'hidden',
           }}>
+            {/* bg blob */}
             <div style={{ position:'absolute', width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.06)', top:'-40px', right:'-40px', pointerEvents:'none' }} />
             <span style={{ display:'inline-block', background:'rgba(255,255,255,0.15)', borderRadius:50, padding:'3px 14px', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:16, border:'1px solid rgba(255,255,255,0.2)' }}>Contact Info</span>
             <h2 className="rsc-title" style={{ fontSize:26, marginBottom:24 }}>Reach Us Anytime</h2>
@@ -458,6 +491,7 @@ const Contact = () => {
               </div>
             ))}
 
+            {/* Social row */}
             <div style={{ marginTop:24, paddingTop:20, borderTop:'1px solid rgba(255,255,255,0.2)' }}>
               <p style={{ fontSize:12, fontWeight:600, opacity:0.7, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:12 }}>Follow Us</p>
               <div style={{ display:'flex', gap:10 }}>
@@ -473,6 +507,7 @@ const Contact = () => {
             </div>
           </div>
 
+          {/* Map card */}
           <div style={{ background:'#fff', borderRadius:24, overflow:'hidden', border:'1.5px solid #F0E4D8', boxShadow:'0 4px 24px rgba(232,98,26,0.07)' }}>
             <div style={{ padding:'18px 24px 0', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
@@ -485,18 +520,22 @@ const Contact = () => {
                 boxShadow:'0 3px 12px rgba(232,98,26,0.3)',
               }}>Open in Maps →</a>
             </div>
+            {/* Illustrated map placeholder */}
             <div style={{
               margin:16, borderRadius:16, height:200, position:'relative', overflow:'hidden',
               background:'linear-gradient(135deg,#FFF3E8,#FFE8D0)',
             }}>
+              {/* Grid lines */}
               {[20,40,60,80].map(p => (
                 <div key={p} style={{ position:'absolute', left:`${p}%`, top:0, bottom:0, borderLeft:'1px solid rgba(232,98,26,0.1)' }} />
               ))}
               {[25,50,75].map(p => (
                 <div key={p} style={{ position:'absolute', top:`${p}%`, left:0, right:0, borderTop:'1px solid rgba(232,98,26,0.1)' }} />
               ))}
+              {/* Road lines */}
               <div style={{ position:'absolute', top:'50%', left:0, right:0, height:8, background:'rgba(232,98,26,0.15)', borderRadius:4, transform:'translateY(-50%)' }} />
               <div style={{ position:'absolute', left:'45%', top:0, bottom:0, width:8, background:'rgba(232,98,26,0.15)', borderRadius:4, transform:'translateX(-50%)' }} />
+              {/* Pin */}
               <div className="rsc-map-pin" style={{ position:'absolute', top:'38%', left:'44%', textAlign:'center' }}>
                 <div style={{ fontSize:32 }}>📍</div>
                 <div style={{
@@ -506,6 +545,7 @@ const Contact = () => {
                   marginTop:2,
                 }}>Raja Snacks</div>
               </div>
+              {/* Surrounding labels */}
               {[
                 { t:'12%', l:'5%',  label:'Market St' },
                 { t:'68%', l:'60%', label:'MG Road' },
@@ -514,27 +554,29 @@ const Contact = () => {
                 <div key={b.label} style={{ position:'absolute', top:b.t, left:b.l, fontSize:10, color:'rgba(232,98,26,0.5)', fontWeight:600 }}>{b.label}</div>
               ))}
             </div>
+          </div>
 
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, padding:'0 16px 16px' }}>
-              {[
-                { icon:'⚡', n:'< 2hr', label:'Response Time' },
-                { icon:'📦', n:'500+',  label:'Cities Served' },
-                { icon:'⭐', n:'4.9',   label:'Google Rating' },
-              ].map(s => (
-                <div key={s.label} style={{
-                  background:'#fff', borderRadius:16, padding:'18px 14px', textAlign:'center',
-                  border:'1.5px solid #F0E4D8', boxShadow:'0 2px 12px rgba(232,98,26,0.05)',
-                }}>
-                  <div style={{ fontSize:22, marginBottom:6 }}>{s.icon}</div>
-                  <div style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:800, color:'var(--saffron)', lineHeight:1 }}>{s.n}</div>
-                  <div style={{ fontSize:12, color:'#9A8070', marginTop:4, fontWeight:500 }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
+          {/* Quick stats */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+            {[
+              { icon:'⚡', n:'< 2hr', label:'Response Time' },
+              { icon:'📦', n:'500+',  label:'Cities Served' },
+              { icon:'⭐', n:'4.9',   label:'Google Rating' },
+            ].map(s => (
+              <div key={s.label} style={{
+                background:'#fff', borderRadius:16, padding:'18px 14px', textAlign:'center',
+                border:'1.5px solid #F0E4D8', boxShadow:'0 2px 12px rgba(232,98,26,0.05)',
+              }}>
+                <div style={{ fontSize:22, marginBottom:6 }}>{s.icon}</div>
+                <div style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:800, color:'var(--saffron)', lineHeight:1 }}>{s.n}</div>
+                <div style={{ fontSize:12, color:'#9A8070', marginTop:4, fontWeight:500 }}>{s.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
+      {/* ── WhatsApp floating button ── */}
       <a href="https://wa.me/919876543210" target="_blank" rel="noreferrer" style={{
         position:'fixed', bottom:28, right:28, zIndex:99,
         width:56, height:56, borderRadius:'50%',
@@ -551,8 +593,10 @@ const Contact = () => {
         💬
       </a>
 
+      {/* ── FAQ ── */}
       <FAQ />
 
+      {/* ── Bottom CTA strip ── */}
       <div style={{
         background:'linear-gradient(135deg,#1A0A00,#3D1A00)',
         padding:'48px 24px', textAlign:'center',

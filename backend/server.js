@@ -7,14 +7,15 @@ import { fileURLToPath } from 'url';
 
 // Import routes
 import productRoutes from './routes/products.js';
-import authRoutes from './routes/auth.js';
+import authRoutes    from './routes/auth.js';
+import contactRoutes from './routes/contact.js';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname  = path.dirname(__filename);
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
@@ -29,7 +30,8 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Routes
 app.use('/api/products', productRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/auth',     authRoutes);
+app.use('/api/contact',  contactRoutes);
 
 // Health check
 app.get('/', (req, res) => {

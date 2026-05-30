@@ -22,6 +22,52 @@ const injectStyles = () => {
     @keyframes slideIn  { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
     @keyframes popIn    { from{opacity:0;transform:scale(0.88)} to{opacity:1;transform:scale(1)} }
     @keyframes countUp  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    /* ── 3D Hero Shop Name ── */
+    @keyframes text3dFloat  { 0%,100%{transform:translateY(0) rotateX(0deg)} 50%{transform:translateY(-6px) rotateX(4deg)} }
+    @keyframes shimmerGold  { 0%{background-position:200% center} 100%{background-position:-200% center} }
+    @keyframes glowPulse    { 0%,100%{filter:drop-shadow(0 0 8px rgba(249,124,53,0.6)) drop-shadow(0 4px 16px rgba(200,78,14,0.5))} 50%{filter:drop-shadow(0 0 24px rgba(249,124,53,1)) drop-shadow(0 6px 24px rgba(200,78,14,0.9))} }
+    @keyframes letterPop    { 0%{opacity:0;transform:translateY(20px) scale(0.8)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+
+    .rs-shop-name-3d {
+      font-family:'Playfair Display',serif;
+      font-size:clamp(48px,7vw,92px);
+      font-weight:800;
+      letter-spacing:0.08em;
+      line-height:1;
+      color:#FFE566;
+      display:block;
+      white-space:nowrap;
+      text-shadow:
+        1px 1px 0 #C14E0E,
+        2px 2px 0 #A84010,
+        3px 3px 0 #8B3510,
+        4px 4px 0 #6B2508,
+        5px 5px 0 #4A1800,
+        6px 6px 0 #2A0D00,
+        0 0 40px rgba(255,200,80,0.55),
+        0 0 80px rgba(249,124,53,0.3);
+      animation:text3dFloat 4s ease-in-out infinite;
+      cursor:default;
+    }
+    .rs-shop-name-3d:hover {
+      color:#fff;
+      text-shadow:
+        1px 1px 0 #C14E0E,
+        2px 2px 0 #A84010,
+        3px 3px 0 #8B3510,
+        4px 4px 0 #6B2508,
+        5px 5px 0 #4A1800,
+        6px 6px 0 #2A0D00,
+        0 0 60px rgba(255,220,120,0.9),
+        0 0 120px rgba(249,124,53,0.6);
+      animation:text3dFloat 4s ease-in-out infinite;
+    }
+
+    .rs-shop-letter {
+      display:inline-block;
+      animation:letterPop 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
 
     .rs-hero-title { font-family:'Playfair Display',serif; }
     .rs-body       { font-family:'DM Sans',sans-serif; }
@@ -567,6 +613,11 @@ const Home = () => {
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:64, alignItems:'center' }}>
             {/* Copy */}
             <div ref={heroRef} className="reveal">
+              {/* 3D Shop Name */}
+              <div style={{ marginBottom:20 }}>
+                <span className="rs-shop-name-3d"> RAJA <br />SNACKS</span>
+              </div>
+
               <div style={{
                 display:'inline-flex', alignItems:'center', gap:8,
                 background:'rgba(255,255,255,0.15)', backdropFilter:'blur(12px)',
@@ -758,7 +809,25 @@ const Home = () => {
       <CommentSection />
 
       {/* ══ FOOTER CTA ══ */}
-
+      <section style={{ padding:'60px 24px',background:'#fff',textAlign:'center',borderTop:'1px solid #F0E8E0' }}>
+        <div style={{ maxWidth:560,margin:'0 auto' }}>
+          <div style={{ fontSize:40,marginBottom:16 }}>🛒</div>
+          <h2 className="rs-hero-title" style={{ fontSize:'clamp(24px,3vw,36px)',color:'#1A0A00',marginBottom:14 }}>
+            Ready to Stock Up?
+          </h2>
+          <p style={{ color:'#9A8070',fontSize:16,lineHeight:1.7,marginBottom:32 }}>
+            Browse our full catalogue and place your wholesale order today. Minimum order: ₹500 only.
+          </p>
+          <div style={{ display:'flex',gap:16,justifyContent:'center',flexWrap:'wrap' }}>
+            <Link to="/products" className="rs-view-all-btn">Shop Now</Link>
+            <Link to="/contact" style={{
+              background:'transparent',color:'#E8621A',border:'1.5px solid #E8621A',borderRadius:50,
+              padding:'13px 32px',fontWeight:600,fontSize:15,textDecoration:'none',
+              fontFamily:"'DM Sans',sans-serif",transition:'background 0.2s,color 0.2s',
+            }}>Talk to Us</Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

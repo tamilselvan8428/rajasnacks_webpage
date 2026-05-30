@@ -120,7 +120,6 @@ const Footer = () => {
     { to:'/',         label:'Home'     },
     { to:'/products', label:'Products' },
     { to:'/contact',  label:'Contact'  },
-    { to:'/admin',    label:'Admin'    },
   ];
 
   const categories = ['Masala Peanuts','Bhujia Sev','Kaju Mixture','Chivda','Moong Dal','Namkeen'];
@@ -215,10 +214,10 @@ const Footer = () => {
             <p className="rsf-col-title">Contact Us</p>
             <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
               {[
-                { icon:'📍', lines:['123 Market Street', 'Chennai – 600001'] },
-                { icon:'📞', lines:['+91 98765 43210', '+91 98765 43211'] },
-                { icon:'✉️', lines:['info@rajasnacks.com'] },
-                { icon:'🕐', lines:['Mon–Sat: 9AM – 8PM', 'Sunday: Closed'] },
+                { icon:'📍', lines:['KSC School Road, Kuppusamypuram, Renganatha Puram, Tiruppur, Tamil Nadu 641604'] },
+                { icon:'📞', lines:['+91 9842263860', '+91 8428863860'] },
+                { icon:'✉️', lines:['manihari364@gmail.com', 'tamilselvan24650@gmail.com'] },
+                { icon:'🕐', lines:['Mon–Sun: 7AM – 9PM'] },
               ].map(row => (
                 <div key={row.icon} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
                   <span style={{ fontSize:15, marginTop:1, flexShrink:0 }}>{row.icon}</span>
@@ -264,7 +263,6 @@ const Footer = () => {
           </a>
         </p>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          <span style={{ color:'rgba(255,255,255,0.25)', fontSize:12 }}>Made with ❤️ in India</span>
           <button className="rsf-top-btn" onClick={() => window.scrollTo({ top:0, behavior:'smooth' })} title="Back to top">
             ↑
           </button>
