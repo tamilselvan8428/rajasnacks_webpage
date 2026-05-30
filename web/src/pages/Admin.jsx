@@ -601,8 +601,7 @@ const Admin = () => {
   /* ══ DASHBOARD ══ */
   return (
     <div className="rsa-body" style={{ position:'fixed', inset:0, zIndex:1001, display:'flex', flexDirection:'row', overflow:'hidden' }}>
-
-      {/* ── Sidebar ── */}
+{/* ── Sidebar ── */}
       <aside className="rsa-sidebar">
         <div className="rsa-sidebar-logo">
           <div className="rsa-sidebar-icon">🥜</div>
@@ -615,6 +614,7 @@ const Admin = () => {
           {[
             { id:'dashboard',  icon:'📊', label:'Dashboard'  },
             { id:'products',   icon:'📦', label:'Products'   },
+            { id:'no-image',   icon:'🖼️', label:'Missing Images' },
           ].map(item => (
             <button key={item.id} className={`rsa-nav-item ${activeTab === item.id ? 'active' : ''}`}
               onClick={() => setActiveTab(item.id)}>
@@ -638,7 +638,7 @@ const Admin = () => {
         <div className="rsa-topbar">
           <div>
             <h2 className="rsa-title" style={{ fontSize:20, color:'#1A0A00', margin:0 }}>
-              {activeTab === 'dashboard' ? 'Dashboard' : 'Products'}
+              {activeTab === 'dashboard' ? 'Dashboard' : activeTab === 'no-image' ? 'Missing Images' : 'Products'}
             </h2>
             <p style={{ fontSize:12, color:'#C8B8A8', margin:0 }}>
               {new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}
@@ -774,6 +774,73 @@ const Admin = () => {
                           <td>
                             <div style={{ display:'flex', gap:8 }}>
                               <button className="rsa-btn-edit" onClick={() => setModal({ mode:'edit', product:p })}>✏️ Edit</button>
+                              <button className="rsa-btn-danger" onClick={() => setConfirm({ id:p._id, name:p.name })}>🗑️ Del</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── MISSING IMAGES TAB ── */}
+          {activeTab === 'no-image' && (
+            <div style={{ animation:'fadeUp 0.4s ease' }}>
+              {/* Toolbar */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24, gap:16, flexWrap:'wrap' }}>
+                <h3 className="rsa-title" style={{ fontSize:18, color:'#1A0A00', margin:0 }}>Products without Image</h3>
+                <span style={{ fontSize:13, color:'#9A8070' }}>
+                  {products.filter(p => !p.image).length} product(s) missing image
+                </span>
+              </div>
+
+              {/* Table */}
+              <div className="rsa-table-wrap">
+                {prodLoad ? (
+                  <div style={{ padding:32 }}>
+                    {[1,2].map(i => (
+                      <div key={i} style={{ display:'flex', gap:16, marginBottom:20, alignItems:'center' }}>
+                        <div className="rsa-skeleton" style={{ width:48, height:48, borderRadius:12 }} />
+                        <div style={{ flex:1 }}>
+                          <div className="rsa-skeleton" style={{ height:14, width:'40%' }} />
+                        </div>
+                        <div className="rsa-skeleton" style={{ width:60, height:14 }} />
+                      </div>
+                    ))}
+                  </div>
+                ) : products.filter(p => !p.image).length === 0 ? (
+                  <div style={{ textAlign:'center', padding:'60px 20px' }}>
+                    <div style={{ fontSize:48, marginBottom:12 }}>🎉</div>
+                    <p style={{ color:'#9A8070', fontSize:15 }}>All products have images!</p>
+                  </div>
+                ) : (
+                  <table className="rsa-table">
+                    <thead>
+                      <tr>
+                        <th>Product Name</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.filter(p => !p.image).map((p, i) => (
+                        <tr key={p._id} style={{ animationDelay:`${i*40}ms` }}>
+                          <td>
+                            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                              <div style={{ width:52, height:48, borderRadius:12, overflow:'hidden', background:'#FFF0E6', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>
+                                🍿
+                              </div>
+                              <div>
+                                <div style={{ fontWeight:700, fontSize:14, color:'#1A0A00' }}>{p.name}</div>
+                                <div style={{ fontSize:11, color:'#C8B8A8', marginTop:2 }}>ID: {p._id?.slice(-6)}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ display:'flex', gap:8 }}>
+                              <button className="rsa-btn-edit" onClick={() => setModal({ mode:'edit', product:p })}>📷 Add Image</button>
                               <button className="rsa-btn-danger" onClick={() => setConfirm({ id:p._id, name:p.name })}>🗑️ Del</button>
                             </div>
                           </td>

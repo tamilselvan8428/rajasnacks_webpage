@@ -33,6 +33,39 @@ const upload = multer({
 // GET all products
 router.get('/', async (req, res) => {
   try {
+    // ─── Sync with external billing server ───
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+      const billingRes = await fetch('https://billing-server-gaha.onrender.com/api/products', {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      if (billingRes.ok) {
+        const billingProducts = await billingRes.json();
+        if (Array.isArray(billingProducts)) {
+          const existingProducts = await Product.find();
+          const existingNames = new Set(existingProducts.map(p => p.name));
+
+          const productsToSave = [];
+          const seenIncoming = new Set();
+          for (const bp of billingProducts) {
+            if (bp.name && !existingNames.has(bp.name) && !seenIncoming.has(bp.name)) {
+              seenIncoming.add(bp.name);
+              productsToSave.push(new Product({
+                name: bp.name,
+              }));
+            }
+          }
+          if (productsToSave.length > 0) {
+            await Product.insertMany(productsToSave);
+          }
+        }
+      }
+    } catch (syncError) {
+      console.error('Failed to sync products from billing server:', syncError.message);
+    }
+
     const products = await Product.find().sort({ createdAt: -1 });
     res.json(products);
   } catch (error) {

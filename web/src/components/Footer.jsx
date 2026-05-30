@@ -241,7 +241,7 @@ const Footer = () => {
             }}
             onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 6px 20px rgba(232,98,26,0.45)'; }}
             onMouseOut={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 3px 14px rgba(232,98,26,0.35)'; }}>
-              Get a Quote →
+              Contact Us →
             </Link>
           </div>
         </div>

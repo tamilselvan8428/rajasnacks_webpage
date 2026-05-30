@@ -599,7 +599,6 @@ const Home = () => {
               </p>
               <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
                 <Link to="/products" className="rs-btn-primary">Browse Products →</Link>
-                <Link to="/contact" className="rs-btn-outline">Get a Quote</Link>
               </div>
               <div style={{ display:'flex', gap:32, marginTop:48 }}>
                 {[{n:'100+',label:'Products'},{n:'10K+',label:'Retailers'},{n:'15+',label:'Years'}].map(s => (

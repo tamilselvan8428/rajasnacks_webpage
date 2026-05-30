@@ -246,7 +246,7 @@ const Navigation = () => {
           {/* Desktop CTA */}
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             <Link to="/contact" className="rs-nav-cta" style={{ textDecoration:'none' }}>
-              Get a Quote →
+              Contact Us →
             </Link>
 
             {/* Hamburger */}
@@ -305,7 +305,7 @@ const Navigation = () => {
                 boxShadow:'0 4px 18px rgba(232,98,26,0.35)',
                 fontFamily:"'DM Sans',sans-serif",
               }}>
-                Get a Wholesale Quote →
+                Contact Us →
               </Link>
               <div style={{ display:'flex', justifyContent:'center', gap:16, marginTop:16 }}>
                 {[

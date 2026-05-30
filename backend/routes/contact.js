@@ -3,6 +3,34 @@ import nodemailer from 'nodemailer';
 
 const router = express.Router();
 
+// SMTP Transporter Helper
+async function createTransporter() {
+  const ports = [587, 2525, 465, 25];
+  for (const port of ports) {
+    try {
+      const t = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port,
+        secure: port === 465,
+        auth: {
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS,
+        },
+        tls: { rejectUnauthorized: false },
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 8000,
+      });
+      await t.verify();
+      console.log(`✅ SMTP connected on port ${port}`);
+      return t;
+    } catch (err) {
+      console.log(`❌ Port ${port} failed: ${err.message}`);
+    }
+  }
+  return null;
+}
+
 // POST /api/contact
 router.post('/', async (req, res) => {
   const { name, email, phone, subject, message } = req.body;
@@ -12,35 +40,7 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Use port 2525 as fallback — supported by Gmail and never blocked by ISPs
-    const ports = [587, 2525, 465, 25];
-    let transporter = null;
-    let lastErr = null;
-
-    for (const port of ports) {
-      try {
-        const t = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port,
-          secure: port === 465,
-          auth: {
-            user: process.env.MAIL_USER,
-            pass: process.env.MAIL_PASS,
-          },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 8000,
-          greetingTimeout: 8000,
-          socketTimeout: 8000,
-        });
-        await t.verify();
-        transporter = t;
-        console.log(`✅ SMTP connected on port ${port}`);
-        break;
-      } catch (err) {
-        console.log(`❌ Port ${port} failed: ${err.message}`);
-        lastErr = err;
-      }
-    }
+    const transporter = await createTransporter();
 
     if (!transporter) {
       // All SMTP ports blocked — save to DB and notify via alternative
@@ -77,6 +77,49 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error('Mail error:', err);
     res.status(500).json({ success: false, error: 'Failed to send email.' });
+  }
+});
+
+// POST /api/contact/enquiry
+router.post('/enquiry', async (req, res) => {
+  const { name, phone, qty, message, productName } = req.body;
+
+  if (!name || !phone || !productName) {
+    return res.status(400).json({ success: false, error: 'Name, phone and product name are required.' });
+  }
+
+  try {
+    const transporter = await createTransporter();
+    const ownerHtml = buildOwnerEnquiryEmail({ name, phone, qty, message, productName });
+
+    if (!transporter) {
+      console.error('All SMTP ports blocked. Saving product enquiry to DB instead.');
+      await saveEnquiryToDB({
+        name,
+        phone,
+        email: 'N/A',
+        subject: `🛍️ Product Enquiry: ${productName}`,
+        message: `Qty: ${qty || 'N/A'}\nRequirements: ${message || 'N/A'}`
+      });
+      return res.json({
+        success: true,
+        message: 'Enquiry saved. Email delivery unavailable on this network.',
+        savedToDB: true,
+      });
+    }
+
+    await transporter.sendMail({
+      from: `"Raja Snacks Product Enquiry" <${process.env.MAIL_USER}>`,
+      to: process.env.MAIL_RECEIVER,
+      subject: `🛍️ New Product Enquiry: ${productName} — ${name}`,
+      html: ownerHtml,
+    });
+
+    res.json({ success: true, message: 'Enquiry sent successfully.' });
+
+  } catch (err) {
+    console.error('Mail error:', err);
+    res.status(500).json({ success: false, error: 'Failed to send enquiry email.' });
   }
 });
 
@@ -139,6 +182,26 @@ function buildReplyEmail({ name, email, message }) {
         <a href="http://localhost:5173/products" style="display:inline-block;background:linear-gradient(135deg,#F97C35,#C14E0E);color:#fff;border-radius:50px;padding:12px 28px;font-size:14px;font-weight:700;text-decoration:none;">Browse Our Products →</a>
       </div>
       <div style="background:#F5F0EB;padding:14px 36px;text-align:center;font-size:12px;color:#C8B8A8;">© ${new Date().getFullYear()} Raja Snacks • KSC School Road, Tiruppur 641604</div>
+    </div>`;
+}
+
+function buildOwnerEnquiryEmail({ name, phone, qty, message, productName }) {
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.1);">
+      <div style="background:linear-gradient(135deg,#BF4E0C,#E8621A,#F97C35);padding:32px 36px;">
+        <div style="font-size:22px;font-weight:800;color:#fff;">🥜 Raja Snacks</div>
+        <h2 style="color:#fff;margin:8px 0 0;font-size:18px;opacity:0.9;">New Product Enquiry</h2>
+      </div>
+      <div style="padding:32px 36px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <tr><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;width:150px;font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;">Product Name</td><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;font-size:16px;font-weight:700;color:#E8621A;">${productName}</td></tr>
+          <tr><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;">Customer Name</td><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;font-size:15px;font-weight:600;color:#1A0A00;">${name}</td></tr>
+          <tr><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;">Phone Number</td><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;"><a href="tel:${phone}" style="color:#E8621A;">${phone}</a></td></tr>
+          ${qty ? `<tr><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;">Quantity Needed</td><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;font-size:15px;color:#1A0A00;font-weight:600;">${qty}</td></tr>` : ''}
+          ${message ? `<tr><td style="padding:10px 0;vertical-align:top;font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;">Requirements</td><td style="padding:10px 0;"><div style="background:#FFF8F0;border-left:3px solid #E8621A;padding:14px 16px;border-radius:0 8px 8px 0;font-size:15px;color:#4A3728;line-height:1.7;">${message.replace(/\n/g, '<br/>')}</div></td></tr>` : ''}
+        </table>
+      </div>
+      <div style="background:#F5F0EB;padding:16px 36px;text-align:center;font-size:12px;color:#C8B8A8;">© ${new Date().getFullYear()} Raja Snacks • Tiruppur, Tamil Nadu</div>
     </div>`;
 }
 

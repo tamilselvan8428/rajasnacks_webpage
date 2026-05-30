@@ -279,12 +279,40 @@ function useReveal(threshold = 0.08, deps = []) {
 /* ─── Enquiry Modal ─── */
 function EnquiryModal({ product, onClose }) {
   const [form, setForm]       = useState({ name:'', phone:'', qty:'', message:'' });
+  const [loading, setLoading] = useState(false);
   const [sent, setSent]       = useState(false);
+  const [error, setError]     = useState('');
 
-  const handleSubmit = () => {
-    if (!form.name || !form.phone) return;
-    setSent(true);
-    setTimeout(() => { setSent(false); onClose(); }, 1800);
+  const handleSubmit = async () => {
+    if (!form.name.trim() || !form.phone.trim()) {
+      setError('Name and phone number are required.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/contact/enquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          qty: form.qty,
+          message: form.message,
+          productName: product.name
+        })
+      });
+      if (res.ok) {
+        setSent(true);
+        setTimeout(() => { setSent(false); onClose(); }, 2000);
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to send enquiry.');
+      }
+    } catch {
+      setError('Network error. Failed to send enquiry.');
+    }
+    setLoading(false);
   };
 
   return (
@@ -311,18 +339,19 @@ function EnquiryModal({ product, onClose }) {
           </div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+            {error && <p style={{ color:'#DC2626', fontSize:13, margin:'0 0 4px', textAlign:'center', fontWeight:500 }}>⚠️ {error}</p>}
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
               <input className="rsp-modal-input" placeholder="Your name *" value={form.name}
-                onChange={e => setForm({...form, name:e.target.value})} />
+                onChange={e => setForm({...form, name:e.target.value})} disabled={loading} />
               <input className="rsp-modal-input" placeholder="Phone number *" value={form.phone}
-                onChange={e => setForm({...form, phone:e.target.value})} />
+                onChange={e => setForm({...form, phone:e.target.value})} disabled={loading} />
             </div>
             <input className="rsp-modal-input" placeholder="Quantity needed (e.g. 50 kg, 100 pcs)" value={form.qty}
-              onChange={e => setForm({...form, qty:e.target.value})} />
+              onChange={e => setForm({...form, qty:e.target.value})} disabled={loading} />
             <textarea className="rsp-modal-input rsp-modal-textarea" placeholder="Any specific requirements or questions?"
-              value={form.message} onChange={e => setForm({...form, message:e.target.value})} />
-            <button className="rsp-modal-submit" onClick={handleSubmit}>
-              Send Enquiry →
+              value={form.message} onChange={e => setForm({...form, message:e.target.value})} disabled={loading} />
+            <button className="rsp-modal-submit" onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Sending...' : 'Send Enquiry →'}
             </button>
             <p style={{ fontSize:12, color:'#C8B8A8', textAlign:'center' }}>
               We respond within 24 hours • No spam, ever
