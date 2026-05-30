@@ -307,15 +307,13 @@ function Dropzone({ value, onChange, required }) {
 
 /* ─── Product Form Modal ─── */
 function ProductModal({ product, onClose, onSave }) {
-  const [form, setForm]     = useState({ name: product?.name || '', price: product?.price || '', description: product?.description || '', image: null });
+  const [form, setForm]     = useState({ name: product?.name || '', image: null });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   const validate = () => {
     const e = {};
     if (!form.name.trim())        e.name = 'Required';
-    if (!form.price || form.price <= 0) e.price = 'Enter a valid price';
-    if (!form.description.trim()) e.description = 'Required';
     if (!product && !form.image)  e.image = 'Image required for new product';
     return e;
   };
@@ -326,8 +324,6 @@ function ProductModal({ product, onClose, onSave }) {
     setLoading(true);
     const fd = new FormData();
     fd.append('name', form.name);
-    fd.append('price', form.price);
-    fd.append('description', form.description);
     if (form.image) fd.append('image', form.image);
     try {
       const url    = product ? `http://localhost:5000/api/products/${product._id}` : 'http://localhost:5000/api/products';
@@ -362,24 +358,6 @@ function ProductModal({ product, onClose, onSave }) {
         </div>
         <div className="rsa-modal-body">
           {field('name', 'Product Name', 'text', { placeholder:'e.g. Masala Peanuts' })}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-            {field('price', 'Price (₹)', 'number', { placeholder:'0.00' })}
-            <div className="rsa-field">
-              <label className="rsa-label">Category</label>
-              <select className="rsa-input" style={{ cursor:'pointer' }}
-                value={form.category || ''} onChange={e => setForm({ ...form, category: e.target.value })}>
-                <option value="">Select category</option>
-                {['Nuts','Sev','Mixture','Dal','Snack'].map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="rsa-field">
-            <label className="rsa-label">Description *</label>
-            <textarea className={`rsa-input rsa-textarea ${errors.description ? 'error' : ''}`}
-              placeholder="Describe the product..." value={form.description}
-              onChange={e => { setForm({ ...form, description: e.target.value }); setErrors({ ...errors, description: null }); }} />
-            {errors.description && <p style={{ fontSize:12, color:'#EF4444', marginTop:4 }}>{errors.description}</p>}
-          </div>
           <div className="rsa-field">
             <label className="rsa-label">Product Image {!product && '*'}</label>
             <Dropzone value={form.image} onChange={img => { setForm({ ...form, image: img }); setErrors({ ...errors, image: null }); }} required={!product} />
@@ -393,6 +371,117 @@ function ProductModal({ product, onClose, onSave }) {
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Category Row ─── */
+function CategoryRow({ cat, index, isDefault, onDelete, onRename }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal]         = useState(cat);
+
+  const handleSave = () => {
+    if (val.trim() && val.trim() !== cat) onRename(val.trim());
+    setEditing(false);
+  };
+
+  const catColors = [
+    '#FFF0E6','#E8F5E9','#EDE7F6','#E3F2FD','#FFF3E0',
+    '#FCE4EC','#E0F2F1','#F3E5F5','#E8EAF6',
+  ];
+  const catTextColors = [
+    '#E8621A','#2E7D32','#4527A0','#1565C0','#E65100',
+    '#880E4F','#00695C','#6A1B9A','#283593',
+  ];
+
+  return (
+    <div style={{
+      display:'flex', alignItems:'center', gap:12, padding:'13px 24px',
+      borderBottom:'1px solid #F8F0E8', transition:'background 0.15s',
+      animation:'slideRight 0.3s ease both', animationDelay:`${index * 40}ms`,
+    }}
+    onMouseOver={e => e.currentTarget.style.background='#FFF8F2'}
+    onMouseOut={e => e.currentTarget.style.background='transparent'}>
+
+      {/* Colour dot */}
+      <div style={{
+        width:10, height:10, borderRadius:'50%', flexShrink:0,
+        background: catTextColors[index % catTextColors.length],
+      }} />
+
+      {/* Badge preview */}
+      <span style={{
+        background: catColors[index % catColors.length],
+        color: catTextColors[index % catTextColors.length],
+        borderRadius:50, padding:'3px 12px', fontSize:11, fontWeight:700,
+        letterSpacing:'0.05em', textTransform:'uppercase', flexShrink:0, minWidth:80, textAlign:'center',
+      }}>{cat}</span>
+
+      {/* Name — editable */}
+      {editing ? (
+        <input
+          autoFocus
+          value={val}
+          onChange={e => setVal(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') { setEditing(false); setVal(cat); } }}
+          style={{
+            flex:1, border:'1.5px solid #E8621A', borderRadius:8,
+            padding:'6px 12px', fontSize:14, color:'#1A0A00',
+            fontFamily:"'DM Sans',sans-serif", outline:'none',
+            boxShadow:'0 0 0 3px rgba(232,98,26,0.1)',
+          }}
+        />
+      ) : (
+        <span style={{ flex:1, fontSize:14, color:'#1A0A00', fontWeight:500 }}>{cat}</span>
+      )}
+
+      {/* Default badge */}
+      {isDefault && (
+        <span style={{ fontSize:11, color:'#C8B8A8', fontWeight:600, letterSpacing:'0.04em', flexShrink:0 }}>DEFAULT</span>
+      )}
+
+      {/* Actions */}
+      <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+        {editing ? (
+          <>
+            <button onClick={handleSave} style={{
+              background:'#E8F5E9', color:'#2E7D32', border:'1.5px solid #A5D6A7',
+              borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700,
+              cursor:'pointer', fontFamily:"'DM Sans',sans-serif",
+            }}>✓ Save</button>
+            <button onClick={() => { setEditing(false); setVal(cat); }} style={{
+              background:'#F5F0EB', color:'#7A6358', border:'1.5px solid #E8D8CC',
+              borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:600,
+              cursor:'pointer', fontFamily:"'DM Sans',sans-serif",
+            }}>Cancel</button>
+          </>
+        ) : (
+          <>
+            <button onClick={() => setEditing(true)} style={{
+              background:'#EFF6FF', color:'#2563EB', border:'1.5px solid #BFDBFE',
+              borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700,
+              cursor:'pointer', fontFamily:"'DM Sans',sans-serif", transition:'background 0.15s',
+            }}
+            onMouseOver={e => e.currentTarget.style.background='#BFDBFE'}
+            onMouseOut={e => e.currentTarget.style.background='#EFF6FF'}>
+              ✏️ Rename
+            </button>
+            <button onClick={onDelete} disabled={isDefault} style={{
+              background: isDefault ? '#F5F0EB' : '#FEF2F2',
+              color: isDefault ? '#C8B8A8' : '#DC2626',
+              border: `1.5px solid ${isDefault ? '#E8D8CC' : '#FECACA'}`,
+              borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700,
+              cursor: isDefault ? 'not-allowed' : 'pointer',
+              fontFamily:"'DM Sans',sans-serif", transition:'background 0.15s',
+              opacity: isDefault ? 0.6 : 1,
+            }}
+            onMouseOver={e => { if (!isDefault) e.currentTarget.style.background='#FECACA'; }}
+            onMouseOut={e => { if (!isDefault) e.currentTarget.style.background='#FEF2F2'; }}>
+              🗑️ Delete
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -468,11 +557,8 @@ const Admin = () => {
   };
 
   const filtered = products.filter(p =>
-    !search || p.name.toLowerCase().includes(search.toLowerCase()) ||
-    (p.description || '').toLowerCase().includes(search.toLowerCase())
+    !search || p.name.toLowerCase().includes(search.toLowerCase())
   );
-
-  const totalValue = products.reduce((s, p) => s + Number(p.price || 0), 0);
 
   /* ══ LOGIN SCREEN ══ */
   if (!auth) return (
@@ -527,8 +613,8 @@ const Admin = () => {
         </div>
         <nav style={{ flex:1, padding:'16px 0' }}>
           {[
-            { id:'dashboard', icon:'📊', label:'Dashboard' },
-            { id:'products',  icon:'📦', label:'Products'  },
+            { id:'dashboard',  icon:'📊', label:'Dashboard'  },
+            { id:'products',   icon:'📦', label:'Products'   },
           ].map(item => (
             <button key={item.id} className={`rsa-nav-item ${activeTab === item.id ? 'active' : ''}`}
               onClick={() => setActiveTab(item.id)}>
@@ -575,9 +661,6 @@ const Admin = () => {
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:20, marginBottom:32 }}>
                 {[
                   { icon:'📦', label:'Total Products',  value: products.length,               color:'#E8621A', bg:'#FFF0E6' },
-                  { icon:'💰', label:'Avg. Price (₹)',   value:`₹${products.length ? Math.round(totalValue/products.length) : 0}`, color:'#7C3AED', bg:'#EDE9FE' },
-                  { icon:'⭐', label:'Avg. Rating',      value:'4.8 / 5',                      color:'#D97706', bg:'#FEF3C7' },
-                  { icon:'🚚', label:'Delivery Cities',  value:'500+',                         color:'#059669', bg:'#D1FAE5' },
                 ].map((s, i) => (
                   <div key={s.label} className="rsa-stat-card" style={{ animationDelay:`${i*80}ms` }}>
                     <div style={{ width:44, height:44, borderRadius:12, background:s.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, marginBottom:14 }}>{s.icon}</div>
@@ -594,7 +677,7 @@ const Admin = () => {
                   <button className="rsa-btn-primary" onClick={() => setActiveTab('products')} style={{ padding:'8px 18px', fontSize:13 }}>View All →</button>
                 </div>
                 <table className="rsa-table">
-                  <thead><tr><th>Product</th><th>Price</th><th>Actions</th></tr></thead>
+                  <thead><tr><th>Product</th><th>Actions</th></tr></thead>
                   <tbody>
                     {products.slice(0, 5).map((p, i) => (
                       <tr key={p._id} style={{ animationDelay:`${i*50}ms` }}>
@@ -608,7 +691,6 @@ const Admin = () => {
                             <div style={{ fontWeight:600, fontSize:14 }}>{p.name}</div>
                           </div>
                         </td>
-                        <td><span style={{ fontWeight:700, color:'#E8621A' }}>₹{p.price}</span></td>
                         <td>
                           <div style={{ display:'flex', gap:8 }}>
                             <button className="rsa-btn-edit" onClick={() => setModal({ mode:'edit', product:p })}>Edit</button>
@@ -669,9 +751,6 @@ const Admin = () => {
                     <thead>
                       <tr>
                         <th>Product</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Description</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -690,19 +769,6 @@ const Admin = () => {
                                 <div style={{ fontWeight:700, fontSize:14, color:'#1A0A00' }}>{p.name}</div>
                                 <div style={{ fontSize:11, color:'#C8B8A8', marginTop:2 }}>ID: {p._id?.slice(-6)}</div>
                               </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="rsa-badge" style={{ background:'#FFF0E6', color:'#E8621A' }}>
-                              {p.category || 'Snack'}
-                            </span>
-                          </td>
-                          <td>
-                            <div style={{ fontWeight:700, color:'#E8621A', fontSize:15 }}>₹{p.price}</div>
-                          </td>
-                          <td>
-                            <div style={{ maxWidth:240, fontSize:13, color:'#7A6358', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                              {p.description}
                             </div>
                           </td>
                           <td>

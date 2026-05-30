@@ -95,7 +95,7 @@ const injectStyles = () => {
     .rs-product-row { display:flex; flex-direction:column; gap:0; }
 
     .rs-product-item {
-      display:grid; grid-template-columns:100px 1fr auto;
+      display:grid; grid-template-columns:auto 1fr;
       align-items:center; gap:20px;
       padding:20px 24px; background:#fff; border-bottom:1px solid #F0E4D8;
       transition:background 0.2s, transform 0.18s;
@@ -455,28 +455,17 @@ function CommentSection() {
 
 /* ─── Fallback / demo products when API is empty ─── */
 const DEMO_PRODUCTS = [
-  { _id:'d1', name:'Masala Peanuts', price:120, description:'Crunchy peanuts tossed in a bold house masala blend. A classic anytime snack.', emoji:'🥜', tag:'Bestseller', discount:18 },
-  { _id:'d2', name:'Bhujia Sev',     price:95,  description:'Thin, crispy gram flour noodles seasoned with turmeric and black pepper.', emoji:'🍜', tag:'Popular',    discount:15 },
-  { _id:'d3', name:'Kaju Mixture',   price:210, description:'Premium cashew-forward mix with fried lentils, raisins, and aromatic spices.', emoji:'🫘', tag:'Premium',   discount:20 },
-  { _id:'d4', name:'Chivda',         price:85,  description:'Light and crispy flattened rice flakes tossed with curry leaves and mustard.', emoji:'🌾', tag:'Fresh',     discount:12 },
-  { _id:'d5', name:'Moong Dal Fry',  price:110, description:'Golden fried split moong dal — protein-rich and absolutely addictive.', emoji:'🟡', tag:'Healthy',   discount:10 },
-  { _id:'d6', name:'Aloo Bhujia',    price:75,  description:'Spiced potato straws, paper-thin and wonderfully crunchy with every bite.', emoji:'🥔', tag:'New',       discount:8  },
+  { _id:'d1', name:'Masala Peanuts', emoji:'🥜' },
+  { _id:'d2', name:'Bhujia Sev', emoji:'🍜' },
+  { _id:'d3', name:'Kaju Mixture', emoji:'🫘' },
+  { _id:'d4', name:'Chivda', emoji:'🌾' },
+  { _id:'d5', name:'Moong Dal Fry', emoji:'🟡' },
+  { _id:'d6', name:'Aloo Bhujia', emoji:'🥔' },
 ];
 
 /* ─── Product List Item ─── */
 function ProductItem({ product, index, isDemo }) {
   const [imgError, setImgError] = useState(false);
-  const tagColors = {
-    Bestseller:{ bg:'#FFF3E0', color:'#E65100' },
-    Popular:   { bg:'#E8F5E9', color:'#2E7D32' },
-    Premium:   { bg:'#EDE7F6', color:'#4527A0' },
-    Fresh:     { bg:'#E3F2FD', color:'#1565C0' },
-    Healthy:   { bg:'#E8F5E9', color:'#1B5E20' },
-    New:       { bg:'#FCE4EC', color:'#880E4F' },
-    Hot:       { bg:'#FFF8E1', color:'#F57F17' },
-  };
-  const tag = product.tag || product.badge || 'Fresh';
-  const tc  = tagColors[tag] || tagColors.Fresh;
 
   return (
     <div
@@ -511,30 +500,10 @@ function ProductItem({ product, index, isDemo }) {
       <div style={{ minWidth:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5, flexWrap:'wrap' }}>
           <span style={{ fontWeight:600, color:'#1A0A00', fontSize:16 }}>{product.name}</span>
-          <span style={{
-            fontSize:11, fontWeight:700, borderRadius:50, padding:'2px 10px',
-            background:tc.bg, color:tc.color, letterSpacing:'0.04em', textTransform:'uppercase',
-          }}>{tag}</span>
         </div>
-        <p style={{ fontSize:13, color:'#9A8070', lineHeight:1.5, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-          {product.description}
-        </p>
         <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:8 }}>
           {[1,2,3,4,5].map(s => <span key={s} style={{ color:'#F5A623', fontSize:12 }}>★</span>)}
           <span style={{ fontSize:12, color:'#C8B8A8' }}>(4.8)</span>
-        </div>
-      </div>
-
-      {/* Price */}
-      <div style={{ textAlign:'right', flexShrink:0 }}>
-        <div style={{ fontSize:20, fontWeight:700, color:'#E8621A', fontFamily:"'DM Sans',sans-serif" }}>
-          ₹{product.price}
-        </div>
-        <div style={{ fontSize:12, color:'#C8B8A8', textDecoration:'line-through', marginTop:2 }}>
-          ₹{Math.round(product.price * (1 + (product.discount||15)/100))}
-        </div>
-        <div style={{ fontSize:11, background:'#E8F5E9', color:'#2E7D32', borderRadius:50, padding:'2px 8px', fontWeight:600, marginTop:4, display:'inline-block' }}>
-          {product.discount || 15}% OFF
         </div>
       </div>
     </div>
@@ -544,16 +513,11 @@ function ProductItem({ product, index, isDemo }) {
 /* ─── Skeleton Row ─── */
 function SkeletonRow() {
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'100px 1fr auto', gap:20, padding:'20px 24px', background:'#fff', borderBottom:'1px solid #F0E4D8', alignItems:'center' }}>
+    <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:20, padding:'20px 24px', background:'#fff', borderBottom:'1px solid #F0E4D8', alignItems:'center' }}>
       <div className="rs-skeleton" style={{ width:100, height:80, borderRadius:12 }} />
       <div>
         <div className="rs-skeleton" style={{ height:16, width:'50%', marginBottom:10 }} />
-        <div className="rs-skeleton" style={{ height:12, width:'80%', marginBottom:6 }} />
-        <div className="rs-skeleton" style={{ height:12, width:'60%' }} />
-      </div>
-      <div style={{ textAlign:'right' }}>
-        <div className="rs-skeleton" style={{ height:24, width:60, marginBottom:6 }} />
-        <div className="rs-skeleton" style={{ height:12, width:48 }} />
+        <div className="rs-skeleton" style={{ height:12, width:'30%' }} />
       </div>
     </div>
   );

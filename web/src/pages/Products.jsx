@@ -225,18 +225,18 @@ const injectStyles = () => {
 
 /* ─── Demo data ─── */
 const DEMO_PRODUCTS = [
-  { _id:'d1', name:'Masala Peanuts',    price:120, description:'Crunchy peanuts tossed in a bold house masala blend with tangy amchur, chilli, and chaat masala.', emoji:'🥜', badge:'Bestseller', discount:18, category:'Nuts' },
-  { _id:'d2', name:'Bhujia Sev',        price:95,  description:'Thin crispy gram flour noodles seasoned with turmeric, black pepper, and asafoetida.', emoji:'🍜', badge:'Popular',    discount:15, category:'Sev' },
-  { _id:'d3', name:'Kaju Mixture',      price:210, description:'Premium cashew-forward snack mix with fried lentils, golden raisins, and aromatic whole spices.', emoji:'🫘', badge:'Premium',   discount:20, category:'Mixture' },
-  { _id:'d4', name:'Chivda',            price:85,  description:'Flattened rice flakes tossed lightly with curry leaves, mustard seeds, peanuts, and green chilli.', emoji:'🌾', badge:'Fresh',     discount:12, category:'Mixture' },
-  { _id:'d5', name:'Moong Dal Fry',     price:110, description:'Golden fried split moong lentils — protein-rich, light, and wonderfully addictive.', emoji:'🟡', badge:'Healthy',   discount:10, category:'Dal' },
-  { _id:'d6', name:'Aloo Bhujia',       price:75,  description:'Paper-thin spiced potato straws fried to the perfect crunch. A timeless Rajasthani classic.', emoji:'🥔', badge:'New',       discount:8,  category:'Sev' },
-  { _id:'d7', name:'Cornflakes Mixture',price:130, description:'Roasted cornflakes tossed with sev, nuts, and South Indian spices for an irresistible crunch.', emoji:'🌽', badge:'Popular',   discount:14, category:'Mixture' },
-  { _id:'d8', name:'Namkeen Cashews',   price:260, description:'Whole cashews slow-roasted with rock salt and a hint of black pepper. Simply luxurious.', emoji:'🤍', badge:'Premium',   discount:22, category:'Nuts' },
-  { _id:'d9', name:'Masala Chana',      price:65,  description:'Dark brown whole chickpeas marinated in tangy masalas and sun-dried to concentrated flavour.', emoji:'🟤', badge:'Fresh',     discount:10, category:'Dal' },
-  { _id:'d10',name:'Rice Crispies',     price:80,  description:'Puffy rice crackers seasoned with sesame, fennel seeds, and a touch of red chilli.', emoji:'⭕', badge:'New',       discount:9,  category:'Snack' },
-  { _id:'d11',name:'Farsan Mix',        price:95,  description:'Classic Gujarati snack medley — a harmonious blend of fried dals, nuts, and fine sev.', emoji:'🎉', badge:'Bestseller', discount:16, category:'Mixture' },
-  { _id:'d12',name:'Methi Mathri',      price:115, description:'Flaky, buttery crackers infused with dried fenugreek leaves — perfect with chai.', emoji:'🍪', badge:'Hot',       discount:11, category:'Snack' },
+  { _id:'d1', name:'Masala Peanuts', emoji:'🥜' },
+  { _id:'d2', name:'Bhujia Sev', emoji:'🍜' },
+  { _id:'d3', name:'Kaju Mixture', emoji:'🫘' },
+  { _id:'d4', name:'Chivda', emoji:'🌾' },
+  { _id:'d5', name:'Moong Dal Fry', emoji:'🟡' },
+  { _id:'d6', name:'Aloo Bhujia', emoji:'🥔' },
+  { _id:'d7', name:'Cornflakes Mixture', emoji:'🌽' },
+  { _id:'d8', name:'Namkeen Cashews', emoji:'🤍' },
+  { _id:'d9', name:'Masala Chana', emoji:'🟤' },
+  { _id:'d10',name:'Rice Crispies', emoji:'⭕' },
+  { _id:'d11',name:'Farsan Mix', emoji:'🎉' },
+  { _id:'d12',name:'Methi Mathri', emoji:'🍪' },
 ];
 
 const BADGE_POOL  = ['Bestseller','Popular','Fresh','Hot','New','Premium'];
@@ -247,10 +247,7 @@ const EMOJI_POOL  = ['🥜','🍜','🫘','🌾','🟡','🥔','🌽','🤍','�
 function normalise(p, i) {
   return {
     ...p,
-    badge:    p.badge    || p.tag      || BADGE_POOL[i % BADGE_POOL.length],
-    category: p.category || p.type     || CAT_POOL[i % CAT_POOL.length],
     emoji:    p.emoji    || EMOJI_POOL[i % EMOJI_POOL.length],
-    discount: p.discount || p.discount_percent || [8,10,12,15,18,20][i % 6],
   };
 }
 
@@ -338,10 +335,8 @@ function EnquiryModal({ product, onClose }) {
 }
 
 /* ─── Product Card (grid) ─── */
-function ProductCard({ product, index, isDemo, onEnquire, wished, onWish }) {
+function ProductCard({ product, index, isDemo, onEnquire }) {
   const [imgError, setImgError] = useState(false);
-  const badge = product.badge || 'Fresh';
-  const badgeClass = `rsp-badge-${badge.toLowerCase().replace(' ','')}`;
 
   return (
     <div className="rsp-card" style={{ animationDelay:`${(index % 8) * 55}ms` }}>
@@ -353,39 +348,14 @@ function ProductCard({ product, index, isDemo, onEnquire, wished, onWish }) {
             alt={product.name} className="rsp-card-img" onError={() => setImgError(true)} />
         )}
         <div className="rsp-card-overlay" />
-        <span className={`rsp-tag ${badgeClass}`}>{badge}</span>
-        <button className={`rsp-wish-btn ${wished ? 'wished' : ''}`} onClick={() => onWish(product._id)}
-          aria-label="Wishlist">
-          {wished ? '❤️' : '🤍'}
-        </button>
         <button className="rsp-enquire-btn" onClick={() => onEnquire(product)}>Enquire Now</button>
       </div>
       <div style={{ padding:'18px 20px 20px', flex:1, display:'flex', flexDirection:'column' }}>
-        <div style={{ marginBottom:4 }}>
-          <p style={{ fontSize:11, color:'#C8B8A8', fontWeight:600, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:4 }}>
-            {product.category || 'Snack'}
-          </p>
-          <h3 style={{ fontSize:17, fontWeight:700, color:'#1A0A00', lineHeight:1.3, marginBottom:6 }}>{product.name}</h3>
+        <div style={{ marginBottom:16 }}>
+          <h3 style={{ fontSize:17, fontWeight:700, color:'#1A0A00', lineHeight:1.3, margin:0 }}>{product.name}</h3>
         </div>
-        <p style={{ fontSize:13, color:'#9A8070', lineHeight:1.6, flex:1,
-          display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', marginBottom:16 }}>
-          {product.description}
-        </p>
-        <div style={{ display:'flex', alignItems:'center', marginBottom:14 }}>
-          {[1,2,3,4,5].map(s => <span key={s} style={{ color:'#F5A623', fontSize:13 }}>★</span>)}
-          <span style={{ fontSize:12, color:'#C8B8A8', marginLeft:5 }}>(4.8)</span>
-        </div>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <div>
-            <span style={{ fontSize:22, fontWeight:800, color:'#E8621A', fontFamily:"'DM Sans',sans-serif" }}>₹{product.price}</span>
-            <span style={{ fontSize:12, color:'#C8B8A8', textDecoration:'line-through', marginLeft:6 }}>
-              ₹{Math.round(product.price * (1 + (product.discount||15)/100))}
-            </span>
-            <span style={{ fontSize:11, background:'#E8F5E9', color:'#2E7D32', borderRadius:50, padding:'2px 8px', fontWeight:600, marginLeft:6 }}>
-              {product.discount||15}% off
-            </span>
-          </div>
-          <button className="rsp-cta-btn" onClick={() => onEnquire(product)}>Enquire</button>
+        <div style={{ display:'flex', justifyContent:'flex-end' }}>
+          <button className="rsp-cta-btn" onClick={() => onEnquire(product)}>Enquire Now →</button>
         </div>
       </div>
     </div>
@@ -393,10 +363,8 @@ function ProductCard({ product, index, isDemo, onEnquire, wished, onWish }) {
 }
 
 /* ─── Product List Row ─── */
-function ProductListRow({ product, index, isDemo, onEnquire, wished, onWish }) {
+function ProductListRow({ product, index, isDemo, onEnquire }) {
   const [imgError, setImgError] = useState(false);
-  const badge = product.badge || 'Fresh';
-  const badgeClass = `rsp-badge-${badge.toLowerCase().replace(' ','')}`;
 
   return (
     <div className="rsp-list-row" style={{ animationDelay:`${index * 50}ms` }}>
@@ -407,41 +375,14 @@ function ProductListRow({ product, index, isDemo, onEnquire, wished, onWish }) {
           <img src={imgSrc(product.image)}
             alt={product.name} className="rsp-list-img" onError={() => setImgError(true)} />
         )}
-        <span className={`rsp-tag ${badgeClass}`} style={{ top:8, left:8, fontSize:10, padding:'2px 8px' }}>{badge}</span>
       </div>
 
       <div style={{ padding:'18px 20px' }}>
-        <p style={{ fontSize:11, color:'#C8B8A8', fontWeight:600, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:4 }}>
-          {product.category || 'Snack'}
-        </p>
-        <h3 style={{ fontSize:16, fontWeight:700, color:'#1A0A00', marginBottom:6 }}>{product.name}</h3>
-        <p style={{ fontSize:13, color:'#9A8070', lineHeight:1.6,
-          display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-          {product.description}
-        </p>
-        <div style={{ display:'flex', alignItems:'center', marginTop:8, gap:4 }}>
-          {[1,2,3,4,5].map(s => <span key={s} style={{ color:'#F5A623', fontSize:12 }}>★</span>)}
-          <span style={{ fontSize:12, color:'#C8B8A8', marginLeft:4 }}>(4.8)</span>
-        </div>
+        <h3 style={{ fontSize:16, fontWeight:700, color:'#1A0A00', margin:0 }}>{product.name}</h3>
       </div>
 
       <div style={{ padding:'18px 24px', display:'flex', flexDirection:'column', alignItems:'flex-end', gap:10, minWidth:140 }}>
-        <div style={{ textAlign:'right' }}>
-          <div style={{ fontSize:22, fontWeight:800, color:'#E8621A' }}>₹{product.price}</div>
-          <div style={{ fontSize:12, color:'#C8B8A8', textDecoration:'line-through' }}>
-            ₹{Math.round(product.price * (1 + (product.discount||15)/100))}
-          </div>
-          <div style={{ fontSize:11, background:'#E8F5E9', color:'#2E7D32', borderRadius:50, padding:'2px 8px', fontWeight:600, marginTop:4, display:'inline-block' }}>
-            {product.discount||15}% off
-          </div>
-        </div>
-        <div style={{ display:'flex', gap:8 }}>
-          <button className={`rsp-wish-btn`} onClick={() => onWish(product._id)}
-            style={{ position:'static', width:36, height:36 }}>
-            {wished ? '❤️' : '🤍'}
-          </button>
-          <button className="rsp-cta-btn" onClick={() => onEnquire(product)}>Enquire</button>
-        </div>
+        <button className="rsp-cta-btn" onClick={() => onEnquire(product)}>Enquire →</button>
       </div>
     </div>
   );
@@ -455,13 +396,9 @@ function SkeletonGrid() {
         <div key={i} style={{ background:'#fff', borderRadius:20, overflow:'hidden', border:'1.5px solid #F0E4D8' }}>
           <div className="rsp-skeleton" style={{ height:210 }} />
           <div style={{ padding:'18px 20px' }}>
-            <div className="rsp-skeleton" style={{ height:12, width:'40%', marginBottom:10 }} />
-            <div className="rsp-skeleton" style={{ height:18, width:'70%', marginBottom:10 }} />
-            <div className="rsp-skeleton" style={{ height:12, width:'90%', marginBottom:6 }} />
-            <div className="rsp-skeleton" style={{ height:12, width:'60%', marginBottom:16 }} />
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <div className="rsp-skeleton" style={{ height:24, width:70 }} />
-              <div className="rsp-skeleton" style={{ height:36, width:80, borderRadius:10 }} />
+            <div className="rsp-skeleton" style={{ height:18, width:'70%', marginBottom:16 }} />
+            <div style={{ display:'flex', justifyContent:'flex-end' }}>
+              <div className="rsp-skeleton" style={{ height:36, width:110, borderRadius:10 }} />
             </div>
           </div>
         </div>
@@ -476,13 +413,9 @@ const Products = () => {
   const [loading, setLoading]     = useState(true);
   const [isDemo, setIsDemo]       = useState(false);
   const [search, setSearch]       = useState('');
-  const [category, setCategory]   = useState('All');
   const [sort, setSort]           = useState('default');
   const [view, setView]           = useState('grid'); // 'grid' | 'list'
   const [enquiryProduct, setEnquiryProduct] = useState(null);
-  const [wished, setWished]       = useState(() => {
-    try { return JSON.parse(localStorage.getItem('rs_wished')) || {}; } catch { return {}; }
-  });
   const [toast, setToast] = useState('');
 
   const headerRef = useReveal(0.05, []);
@@ -504,37 +437,21 @@ const Products = () => {
       .catch(() => { setProducts(DEMO_PRODUCTS); setIsDemo(true); setLoading(false); });
   }, []);
 
-  const toggleWish = (id) => {
-    const next = { ...wished, [id]: !wished[id] };
-    setWished(next);
-    localStorage.setItem('rs_wished', JSON.stringify(next));
-    showToast(next[id] ? '❤️ Added to wishlist' : '🤍 Removed from wishlist');
-  };
-
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(''), 2200);
   };
 
-  /* ─ Dynamic categories from actual data ─ */
-  const CATEGORIES = ['All', ...Array.from(new Set(products.map(p => p.category))).sort()];
-
   /* ─ Filter + sort ─ */
   const filtered = products
     .filter(p => {
-      const matchCat  = category === 'All' || (p.category || 'Snack') === category;
-      const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase())
-        || (p.description || '').toLowerCase().includes(search.toLowerCase());
-      return matchCat && matchSearch;
+      return !search || p.name.toLowerCase().includes(search.toLowerCase());
     })
     .sort((a, b) => {
-      if (sort === 'price-asc')  return a.price - b.price;
-      if (sort === 'price-desc') return b.price - a.price;
-      if (sort === 'name')       return a.name.localeCompare(b.name);
+      if (sort === 'name')      return a.name.localeCompare(b.name);
+      if (sort === 'name-desc') return b.name.localeCompare(a.name);
       return 0;
     });
-
-  const wishCount = Object.values(wished).filter(Boolean).length;
 
   if (loading) {
     return (
@@ -596,34 +513,13 @@ const Products = () => {
 
       {/* ── Toolbar ── */}
       <div style={{ maxWidth:1200, margin:'0 auto', padding:'28px 24px 0' }}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
-          {/* Category filters */}
-          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-            {CATEGORIES.map(cat => (
-              <button key={cat} className={`rsp-filter-btn ${category === cat ? 'active' : ''}`}
-                onClick={() => setCategory(cat)}>
-                {cat === 'All' ? '✦ All' : cat}
-              </button>
-            ))}
-          </div>
-
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', gap:16, flexWrap:'wrap' }}>
           {/* Right controls */}
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            {wishCount > 0 && (
-              <button onClick={() => setCategory('All')} style={{
-                background:'#FFF0E6', border:'1.5px solid #F0D8C0', borderRadius:50,
-                padding:'7px 14px', fontSize:13, fontWeight:600, color:'var(--saffron)',
-                cursor:'pointer', display:'flex', alignItems:'center', gap:5,
-                fontFamily:"'DM Sans',sans-serif",
-              }}>
-                ❤️ {wishCount}
-              </button>
-            )}
             <select className="rsp-select" value={sort} onChange={e => setSort(e.target.value)}>
               <option value="default">Sort: Default</option>
-              <option value="price-asc">Price: Low → High</option>
-              <option value="price-desc">Price: High → Low</option>
               <option value="name">Name A–Z</option>
+              <option value="name-desc">Name Z–A</option>
             </select>
             <button className={`rsp-view-btn ${view==='grid'?'active':''}`} onClick={() => setView('grid')}
               title="Grid view" style={{ color: view==='grid'?'#fff':'#9A8070', fontSize:14 }}>⊞</button>
@@ -636,7 +532,6 @@ const Products = () => {
         <div style={{ marginTop:16, display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:8 }}>
           <p style={{ fontSize:13, color:'#9A8070' }}>
             Showing <strong style={{ color:'#1A0A00' }}>{filtered.length}</strong> product{filtered.length !== 1 ? 's' : ''}
-            {category !== 'All' && <> in <strong style={{ color:'var(--saffron)' }}>{category}</strong></>}
             {search && <> matching "<strong style={{ color:'var(--saffron)' }}>{search}</strong>"</>}
           </p>
           {isDemo && (
@@ -653,23 +548,23 @@ const Products = () => {
           <div style={{ textAlign:'center', padding:'80px 20px' }}>
             <div style={{ fontSize:56, marginBottom:16 }}>🔍</div>
             <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:26, color:'#1A0A00', marginBottom:10 }}>No snacks found</h3>
-            <p style={{ color:'#9A8070', fontSize:15, marginBottom:24 }}>Try a different search term or category</p>
-            <button className="rsp-filter-btn active" onClick={() => { setSearch(''); setCategory('All'); }}>
-              Clear filters
+            <p style={{ color:'#9A8070', fontSize:15, marginBottom:24 }}>Try a different search term</p>
+            <button className="rsp-filter-btn active" onClick={() => { setSearch(''); }}>
+              Clear search
             </button>
           </div>
         ) : view === 'grid' ? (
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))', gap:24 }}>
             {filtered.map((p, i) => (
               <ProductCard key={p._id} product={p} index={i} isDemo={isDemo}
-                onEnquire={setEnquiryProduct} wished={!!wished[p._id]} onWish={toggleWish} />
+                onEnquire={setEnquiryProduct} />
             ))}
           </div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
             {filtered.map((p, i) => (
               <ProductListRow key={p._id} product={p} index={i} isDemo={isDemo}
-                onEnquire={setEnquiryProduct} wished={!!wished[p._id]} onWish={toggleWish} />
+                onEnquire={setEnquiryProduct} />
             ))}
           </div>
         )}
