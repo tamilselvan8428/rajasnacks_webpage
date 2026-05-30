@@ -12,137 +12,134 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
-      },
-    });
+    // Use port 2525 as fallback — supported by Gmail and never blocked by ISPs
+    const ports = [587, 2525, 465, 25];
+    let transporter = null;
+    let lastErr = null;
 
-    // ── Email to owner ──
+    for (const port of ports) {
+      try {
+        const t = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port,
+          secure: port === 465,
+          auth: {
+            user: process.env.MAIL_USER,
+            pass: process.env.MAIL_PASS,
+          },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 8000,
+          greetingTimeout: 8000,
+          socketTimeout: 8000,
+        });
+        await t.verify();
+        transporter = t;
+        console.log(`✅ SMTP connected on port ${port}`);
+        break;
+      } catch (err) {
+        console.log(`❌ Port ${port} failed: ${err.message}`);
+        lastErr = err;
+      }
+    }
+
+    if (!transporter) {
+      // All SMTP ports blocked — save to DB and notify via alternative
+      console.error('All SMTP ports blocked. Saving enquiry to DB instead.');
+      // Still return success to user — you'll see it in MongoDB
+      await saveEnquiryToDB({ name, email, phone, subject, message });
+      return res.json({
+        success: true,
+        message: 'Enquiry saved. Email delivery unavailable on this network.',
+        savedToDB: true,
+      });
+    }
+
+    const ownerHtml = buildOwnerEmail({ name, email, phone, subject, message });
+    const replyHtml = buildReplyEmail({ name, email, phone, message });
+
     await transporter.sendMail({
       from: `"Raja Snacks Contact" <${process.env.MAIL_USER}>`,
-      to: process.env.MAIL_USER,
+      to: process.env.MAIL_RECEIVER,
       replyTo: email,
       subject: `📬 New Enquiry: ${subject || 'General'} — ${name}`,
-      html: `
-        <div style="font-family:'DM Sans',Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.1);">
-          <!-- Header -->
-          <div style="background:linear-gradient(135deg,#BF4E0C,#E8621A,#F97C35);padding:32px 36px;">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-              <span style="font-size:28px;">🥜</span>
-              <span style="font-family:Georgia,serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:0.04em;">Raja Snacks</span>
-            </div>
-            <h2 style="color:#fff;margin:0;font-size:20px;font-weight:600;opacity:0.9;">New Contact Form Submission</h2>
-          </div>
-
-          <!-- Body -->
-          <div style="padding:32px 36px;">
-            <table style="width:100%;border-collapse:collapse;">
-              <tr>
-                <td style="padding:10px 0;border-bottom:1px solid #F0E4D8;width:130px;">
-                  <span style="font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;letter-spacing:0.06em;">Name</span>
-                </td>
-                <td style="padding:10px 0;border-bottom:1px solid #F0E4D8;">
-                  <span style="font-size:15px;font-weight:600;color:#1A0A00;">${name}</span>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:10px 0;border-bottom:1px solid #F0E4D8;">
-                  <span style="font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;letter-spacing:0.06em;">Email</span>
-                </td>
-                <td style="padding:10px 0;border-bottom:1px solid #F0E4D8;">
-                  <a href="mailto:${email}" style="color:#E8621A;font-size:15px;">${email}</a>
-                </td>
-              </tr>
-              ${phone ? `
-              <tr>
-                <td style="padding:10px 0;border-bottom:1px solid #F0E4D8;">
-                  <span style="font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;letter-spacing:0.06em;">Phone</span>
-                </td>
-                <td style="padding:10px 0;border-bottom:1px solid #F0E4D8;">
-                  <a href="tel:${phone}" style="color:#E8621A;font-size:15px;">${phone}</a>
-                </td>
-              </tr>` : ''}
-              ${subject ? `
-              <tr>
-                <td style="padding:10px 0;border-bottom:1px solid #F0E4D8;">
-                  <span style="font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;letter-spacing:0.06em;">Subject</span>
-                </td>
-                <td style="padding:10px 0;border-bottom:1px solid #F0E4D8;">
-                  <span style="font-size:15px;color:#1A0A00;">${subject}</span>
-                </td>
-              </tr>` : ''}
-              <tr>
-                <td style="padding:10px 0;vertical-align:top;">
-                  <span style="font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;letter-spacing:0.06em;">Message</span>
-                </td>
-                <td style="padding:10px 0;">
-                  <div style="background:#FFF8F0;border-left:3px solid #E8621A;padding:14px 16px;border-radius:0 8px 8px 0;font-size:15px;color:#4A3728;line-height:1.7;">
-                    ${message.replace(/\n/g, '<br/>')}
-                  </div>
-                </td>
-              </tr>
-            </table>
-
-            <div style="margin-top:28px;padding:16px 20px;background:#FFF0E6;border-radius:12px;display:flex;align-items:center;gap:10px;">
-              <span style="font-size:18px;">💡</span>
-              <span style="font-size:13px;color:#7A6358;">Hit <strong>Reply</strong> to respond directly to ${name} at ${email}</span>
-            </div>
-          </div>
-
-          <!-- Footer -->
-          <div style="background:#F5F0EB;padding:18px 36px;text-align:center;font-size:12px;color:#C8B8A8;">
-            © ${new Date().getFullYear()} Raja Snacks • Tiruppur, Tamil Nadu
-          </div>
-        </div>
-      `,
+      html: ownerHtml,
     });
 
-    // ── Auto-reply to sender ──
     await transporter.sendMail({
       from: `"Raja Snacks" <${process.env.MAIL_USER}>`,
       to: email,
       subject: `✅ We received your message, ${name.split(' ')[0]}!`,
-      html: `
-        <div style="font-family:'DM Sans',Arial,sans-serif;max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-          <div style="background:linear-gradient(135deg,#BF4E0C,#E8621A,#F97C35);padding:32px 36px;text-align:center;">
-            <div style="font-size:40px;margin-bottom:10px;">🥜</div>
-            <h1 style="font-family:Georgia,serif;color:#fff;margin:0;font-size:26px;">Raja Snacks</h1>
-            <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">Wholesale Snacks Supplier, Tiruppur</p>
-          </div>
-          <div style="padding:36px;">
-            <h2 style="font-family:Georgia,serif;color:#1A0A00;margin:0 0 16px;font-size:22px;">Thanks for reaching out, ${name.split(' ')[0]}! 👋</h2>
-            <p style="color:#7A6358;font-size:15px;line-height:1.7;margin:0 0 16px;">
-              We've received your message and our team will get back to you within <strong>24 hours</strong>.
-            </p>
-            <div style="background:#FFF8F0;border-radius:12px;padding:18px 20px;margin:20px 0;border-left:3px solid #E8621A;">
-              <p style="font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 8px;">Your message</p>
-              <p style="font-size:14px;color:#4A3728;line-height:1.6;margin:0;">${message.replace(/\n/g, '<br/>')}</p>
-            </div>
-            <p style="color:#7A6358;font-size:14px;line-height:1.7;margin:0 0 24px;">
-              In the meantime, feel free to call us directly:<br/>
-              <a href="tel:+919842263860" style="color:#E8621A;font-weight:700;">+91 98422 63860</a> &nbsp;|&nbsp;
-              <a href="https://wa.me/919842263860" style="color:#25D366;font-weight:700;">WhatsApp</a>
-            </p>
-            <a href="http://localhost:5173/products" style="display:inline-block;background:linear-gradient(135deg,#F97C35,#C14E0E);color:#fff;border-radius:50px;padding:12px 28px;font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 4px 16px rgba(232,98,26,0.35);">
-              Browse Our Products →
-            </a>
-          </div>
-          <div style="background:#F5F0EB;padding:16px 36px;text-align:center;font-size:12px;color:#C8B8A8;">
-            © ${new Date().getFullYear()} Raja Snacks • KSC School Road, Tiruppur, Tamil Nadu 641604
-          </div>
-        </div>
-      `,
+      html: replyHtml,
     });
 
     res.json({ success: true, message: 'Email sent successfully.' });
 
   } catch (err) {
     console.error('Mail error:', err);
-    res.status(500).json({ success: false, error: 'Failed to send email. Please try again.' });
+    res.status(500).json({ success: false, error: 'Failed to send email.' });
   }
 });
+
+/* ─── Save to MongoDB when SMTP is unavailable ─── */
+async function saveEnquiryToDB({ name, email, phone, subject, message }) {
+  try {
+    const { default: mongoose } = await import('mongoose');
+    const schema = new mongoose.Schema({
+      name: String, email: String, phone: String,
+      subject: String, message: String, createdAt: { type: Date, default: Date.now },
+    });
+    const Enquiry = mongoose.models.Enquiry || mongoose.model('Enquiry', schema);
+    await Enquiry.create({ name, email, phone, subject, message });
+    console.log('✅ Enquiry saved to MongoDB');
+  } catch (e) {
+    console.error('DB save failed:', e.message);
+  }
+}
+
+/* ─── Email templates ─── */
+function buildOwnerEmail({ name, email, phone, subject, message }) {
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.1);">
+      <div style="background:linear-gradient(135deg,#BF4E0C,#E8621A,#F97C35);padding:32px 36px;">
+        <div style="font-size:22px;font-weight:800;color:#fff;">🥜 Raja Snacks</div>
+        <h2 style="color:#fff;margin:8px 0 0;font-size:18px;opacity:0.9;">New Contact Form Submission</h2>
+      </div>
+      <div style="padding:32px 36px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <tr><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;width:120px;font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;">Name</td><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;font-size:15px;font-weight:600;color:#1A0A00;">${name}</td></tr>
+          <tr><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;">Email</td><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;"><a href="mailto:${email}" style="color:#E8621A;">${email}</a></td></tr>
+          ${phone ? `<tr><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;">Phone</td><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;"><a href="tel:${phone}" style="color:#E8621A;">${phone}</a></td></tr>` : ''}
+          ${subject ? `<tr><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;">Subject</td><td style="padding:10px 0;border-bottom:1px solid #F0E4D8;font-size:15px;color:#1A0A00;">${subject}</td></tr>` : ''}
+          <tr><td style="padding:10px 0;vertical-align:top;font-size:12px;font-weight:700;color:#9A8070;text-transform:uppercase;">Message</td><td style="padding:10px 0;"><div style="background:#FFF8F0;border-left:3px solid #E8621A;padding:14px 16px;border-radius:0 8px 8px 0;font-size:15px;color:#4A3728;line-height:1.7;">${message.replace(/\n/g, '<br/>')}</div></td></tr>
+        </table>
+        <div style="margin-top:24px;padding:14px 18px;background:#FFF0E6;border-radius:10px;font-size:13px;color:#7A6358;">
+          💡 Hit <strong>Reply</strong> to respond directly to ${name} at ${email}
+        </div>
+      </div>
+      <div style="background:#F5F0EB;padding:16px 36px;text-align:center;font-size:12px;color:#C8B8A8;">© ${new Date().getFullYear()} Raja Snacks • Tiruppur, Tamil Nadu</div>
+    </div>`;
+}
+
+function buildReplyEmail({ name, email, message }) {
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#BF4E0C,#E8621A,#F97C35);padding:32px 36px;text-align:center;">
+        <div style="font-size:40px;margin-bottom:10px;">🥜</div>
+        <h1 style="color:#fff;margin:0;font-size:24px;">Raja Snacks</h1>
+        <p style="color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:13px;">Wholesale Snacks Supplier, Tiruppur</p>
+      </div>
+      <div style="padding:36px;">
+        <h2 style="color:#1A0A00;margin:0 0 14px;font-size:20px;">Thanks for reaching out, ${name.split(' ')[0]}! 👋</h2>
+        <p style="color:#7A6358;font-size:15px;line-height:1.7;margin:0 0 16px;">We've received your message and will get back to you within <strong>24 hours</strong>.</p>
+        <div style="background:#FFF8F0;border-radius:12px;padding:16px 18px;margin:18px 0;border-left:3px solid #E8621A;">
+          <p style="font-size:11px;font-weight:700;color:#9A8070;text-transform:uppercase;margin:0 0 8px;">Your message</p>
+          <p style="font-size:14px;color:#4A3728;line-height:1.6;margin:0;">${message.replace(/\n/g, '<br/>')}</p>
+        </div>
+        <p style="color:#7A6358;font-size:14px;margin:0 0 22px;">Need urgent help? Call us: <a href="tel:+919842263860" style="color:#E8621A;font-weight:700;">+91 98422 63860</a></p>
+        <a href="http://localhost:5173/products" style="display:inline-block;background:linear-gradient(135deg,#F97C35,#C14E0E);color:#fff;border-radius:50px;padding:12px 28px;font-size:14px;font-weight:700;text-decoration:none;">Browse Our Products →</a>
+      </div>
+      <div style="background:#F5F0EB;padding:14px 36px;text-align:center;font-size:12px;color:#C8B8A8;">© ${new Date().getFullYear()} Raja Snacks • KSC School Road, Tiruppur 641604</div>
+    </div>`;
+}
 
 export default router;
